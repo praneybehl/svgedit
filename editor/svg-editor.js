@@ -113,6 +113,11 @@ TODOS
 					color: '000000', // solid black
 					opacity: 1
 				},
+				text: {
+					stroke_width: 0,
+					font_size: 24,
+					font_family: 'serif'
+				},
 				initOpacity: 1,
 				colorPickerCSS: null, // Defaults to 'left' with a position equal to that of the fill_color or stroke_color element minus 140, and a 'bottom' equal to 40
 				initTool: 'select',
@@ -1527,6 +1532,7 @@ TODOS
 					$('#group_opacity').val(opac_perc);
 					$('#opac_slider').slider('option', 'value', opac_perc);
 					$('#elem_id').val(selectedElement.id);
+					$('#elem_class').val(selectedElement.getAttribute("class"));
 				}
 
 				updateToolButtonState();
@@ -1562,7 +1568,7 @@ TODOS
 					$('#blur_slider').slider('option', 'value', blurval);
 
 					if (svgCanvas.addedNew) {
-						if (elname === 'image') {
+						if (elname === 'image' && svgCanvas.getMode() === 'image') {
 							// Prompt for URL if not a data URL
 							if (svgCanvas.getHref(elem).indexOf('data:') !== 0) {
 								promptImgURL();
@@ -1687,6 +1693,7 @@ TODOS
 
 						if (el_name == 'text') {
 							$('#text_panel').css('display', 'inline');
+							$('#tool_font_size').css('display', 'inline');
 							if (svgCanvas.getItalic()) {
 								$('#tool_italic').addClass('push_button_pressed').removeClass('tool_button');
 							} else {
@@ -1707,7 +1714,7 @@ TODOS
 								}, 100);
 							}
 						} // text
-						else if (el_name == 'image') {
+						else if (el_name == 'image' && svgCanvas.getMode() == 'image') {
 							setImageURL(svgCanvas.getHref(elem));
 						} // image
 						else if (el_name === 'g' || el_name === 'use') {
@@ -2991,7 +2998,7 @@ TODOS
 					return false;
 				}
 
-				if (attr !== 'id') {
+				if (attr !== 'id' && attr !== 'class') {
 					if (isNaN(val)) {
 						val = svgCanvas.convertToNum(attr, val);
 					} else if (curConfig.baseUnit !== 'px') {
@@ -4493,8 +4500,8 @@ TODOS
 					{sel: '#tool_move_bottom', fn: moveToBottomSelected, evt: 'click', key: 'ctrl+shift+['},
 					{sel: '#tool_topath', fn: convertToPath, evt: 'click'},
 					{sel: '#tool_make_link,#tool_make_link_multi', fn: makeHyperlink, evt: 'click'},
-					{sel: '#tool_undo', fn: clickUndo, evt: 'click', key: ['Z', true]},
-					{sel: '#tool_redo', fn: clickRedo, evt: 'click', key: ['Y', true]},
+					{sel: '#tool_undo', fn: clickUndo, evt: 'click'},
+					{sel: '#tool_redo', fn: clickRedo, evt: 'click'},
 					{sel: '#tool_clone,#tool_clone_multi', fn: clickClone, evt: 'click', key: ['D', true]},
 					{sel: '#tool_group_elements', fn: clickGroup, evt: 'click', key: ['G', true]},
 					{sel: '#tool_ungroup', fn: clickGroup, evt: 'click'},
@@ -4905,12 +4912,14 @@ TODOS
 						if (file.type.indexOf('svg') != -1) {
 							reader = new FileReader();
 							reader.onloadend = function(e) {
-								svgCanvas.importSvgString(e.target.result, true);
+								var newElement = svgCanvas.importSvgString(e.target.result, true);
 								svgCanvas.ungroupSelectedElement();
 								svgCanvas.ungroupSelectedElement();
 								svgCanvas.groupSelectedElements();
 								svgCanvas.alignSelectedElements('m', 'page');
 								svgCanvas.alignSelectedElements('c', 'page');
+								// highlight imported element, otherwise we get strange empty selectbox
+								svgCanvas.selectOnly([newElement]);
 								$('#dialog_box').hide();
 							};
 							reader.readAsText(file);
